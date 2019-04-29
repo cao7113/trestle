@@ -20,6 +20,14 @@ module Trestle
         admin = Class.new(admin_class)
         admin.options = options
 
+        # actor admin extension
+        actor = admin.find_actor
+        if actor
+          # BUG: RuntimeError (Circular dependency detected while autoloading constant Develop::ProfileAdmin)
+          # very strange even though  Develop == actor.scope 
+          # options[:scope] ||= actor.scope
+        end
+
         # Define a constant based on the admin name
         scope = options[:scope] || Object
         scope.const_set("#{name.to_s.camelize}Admin", admin)
@@ -27,11 +35,23 @@ module Trestle
         # Define admin controller class
         # This is done using class_eval rather than Class.new so that the full
         # class name and parent chain is set when Rails' inherited hooks are called.
+        # admin.send :remove_const, :AdminController if admin.const_defined?(:AdminController)
         admin.class_eval("class AdminController < #{controller.name}; end")
 
         # Set a reference on the controller class to the admin class
         controller = admin.const_get(:AdminController)
         controller.instance_variable_set("@admin", admin)
+
+        # actor extension
+        if actor
+          if actor.helpers_defined?
+            hconst = actor.helpers_const
+            controller.include(hconst)
+            controller.logger.debug "==including #{hconst.name} into #{controller.name}"
+          else
+            controller.logger.warn "==find not defined #{actor.scope.name}::#{actor.helpers_name}"
+          end
+        end
 
         admin.build(&block)
         admin.validate!

@@ -139,5 +139,11 @@ module Trestle
     def around_action(options={}, &block)
       around_actions << Action.new(options, block)
     end
+
+    option :actors, {}
+
+    def add_actor(id, opts = {})
+      actors[id] = Actor.new(id, opts)
+    end
   end
 end

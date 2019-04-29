@@ -29,6 +29,7 @@ module Trestle
   autoload :Tab
   autoload :Table
   autoload :Toolbar
+  autoload :Actor
 
   mattr_accessor :admins
   self.admins = {}
@@ -42,7 +43,14 @@ module Trestle
   end
 
   def self.register(admin)
-    self.admins[admin.admin_name] = admin
+    if actor = admin.find_actor
+      reg = Actor.admins_registry(actor.id)
+    else
+      reg = self.admins
+    end
+    reg[admin.admin_name] = admin
+
+    # self.admins[admin.admin_name] = admin
   end
 
   def self.lookup(admin)
@@ -61,6 +69,19 @@ module Trestle
   def self.navigation(context)
     blocks = config.menus + admins.values.map(&:menu).compact
     Navigation.build(blocks, context)
+  end
+
+  #########################################################
+  # actor based admin extension
+  # eg. developer actor console pages
+  
+  mattr_accessor :actors_admins
+  self.actors_admins = {}
+
+  def self.actor_navigation(context, actor_id)
+    adms = Actor.admins_registry(actor_id)
+    menus = adms.values.map(&:menu).compact
+    Navigation.build(menus, context)
   end
 end
 

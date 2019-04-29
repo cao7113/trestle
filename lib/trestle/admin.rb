@@ -38,6 +38,15 @@ module Trestle
         @options ||= {}
       end
 
+      def actor_id
+        options[:actor] # nil for default
+      end
+
+      def find_actor
+        return unless actor_id
+        Actor.find(actor_id) || raise("Missing actor for id: #{actor_id}!")
+      end
+
       def tables
         @tables ||= {}
       end
@@ -53,7 +62,14 @@ module Trestle
       end
 
       def breadcrumbs
-        Breadcrumb::Trail.new(Array(Trestle.config.root_breadcrumbs) + [breadcrumb])
+        actor = find_actor
+        if actor
+          root_bcs = [Trestle::Breadcrumb.new(I18n.t("admin.breadcrumbs.home", default: "Home"), 
+            "#{Trestle.config.root}/#{actor.prefix}")]
+          Breadcrumb::Trail.new(root_bcs + [breadcrumb])
+        else
+          Breadcrumb::Trail.new(Array(Trestle.config.root_breadcrumbs) + [breadcrumb])
+        end
       end
 
       def breadcrumb

@@ -18,7 +18,11 @@ module Trestle
           load_paths.each do |load_path|
             matcher = /\A#{Regexp.escape(load_path.to_s)}\/(.*)\.rb\Z/
             Dir.glob("#{load_path}/**/*.rb").sort.each do |file|
-              require_dependency file.sub(matcher, '\1')
+              
+              # require_dependency file.sub(matcher, '\1')
+              tname = file.sub(matcher, '\1')
+              Rails.logger.debug "==reloading #{tname} from file: #{file}"
+              require_dependency tname
             end
           end
         ensure
@@ -31,6 +35,7 @@ module Trestle
 
     def clear
       Trestle.admins = {}
+      Trestle.actors_admins = {}
     end
 
     def load_paths

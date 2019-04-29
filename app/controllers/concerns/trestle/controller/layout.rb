@@ -9,7 +9,13 @@ module Trestle
 
     protected
       def choose_layout
-        request.xhr? ? false : "trestle/admin"
+        # request.xhr? ? false : "trestle/admin"
+
+        return false if request.xhr?
+        if actor = admin.find_actor
+          return actor.layout if actor.layout
+        end
+        "trestle/admin"
       end
     end
   end
